@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>People of Ankleshwar — Version 0.3.2</title>
+<title>People of Ankleshwar — Version 0.3.3 Smooth Controls</title>
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#101820;font-family:system-ui,sans-serif}
   #hud{position:fixed;inset:12px 12px auto 12px;z-index:2;color:#fff;pointer-events:none;text-shadow:0 2px 5px #000}
@@ -14,9 +14,9 @@
   #mode{top:12px}
   #cameraMode{top:60px;background:#eaf2f8;color:#152532}
   #touchHelp{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;color:#fff;background:#07131dcc;padding:8px 12px;border-radius:12px;font-size:11px;text-align:center;pointer-events:none;white-space:nowrap}
-  #leftZone,#rightZone{position:fixed;bottom:0;height:48%;width:50%;z-index:1;touch-action:none;background:transparent}
+  #leftZone,#rightZone{position:fixed;top:0;height:100%;width:50%;z-index:1;touch-action:none;background:transparent}
   #leftZone{left:0} #rightZone{right:0}
-  #leftRing{position:fixed;left:22%;bottom:15%;width:92px;height:92px;border:2px solid #ffffff66;border-radius:50%;background:#10243233;z-index:2;pointer-events:none;transform:translate(-50%,50%)}
+  #leftRing{position:fixed;left:22%;top:76%;width:104px;height:104px;border:2px solid #ffffff66;border-radius:50%;background:#10243244;z-index:2;pointer-events:none;transform:translate(-50%,-50%)}
   #leftNub{position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px;border-radius:50%;background:#ffb000aa;border:1px solid #fff;}
   #lookLabel{position:fixed;right:14px;bottom:16%;z-index:2;color:#fff8;font-size:10px;pointer-events:none}
   @media(min-width:801px){#touchHelp,#leftZone,#rightZone,#leftRing,#lookLabel{display:none}#help{max-width:250px}}
@@ -25,12 +25,12 @@
 </style>
 </head>
 <body>
-<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3.2 · STRAFE CONTROL FIX</div></div>
+<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3.3 · GTA-STYLE SMOOTH CONTROLS</div></div>
 <button id="mode">MODE: WALK</button>
 <button id="cameraMode">CAMERA: THIRD PERSON</button>
-<div id="help">चलें: W/S = आगे-पीछे, A/D = बाएँ-दाएँ चलें। मोबाइल: बाईं तरफ ऊपर/नीचे = आगे-पीछे, दाएँ/बाएँ = साइड में चलें। दाईं तरफ ड्रैग = कैमरा घुमाएँ।</div>
+<div id="help">चलें: मोबाइल पर बाईं तरफ जॉयस्टिक खिसकाएँ। दाईं तरफ उंगली घुमाने से कैमरा घूमेगा। कंप्यूटर: WASD / Arrow keys।</div>
 <div id="leftZone" aria-label="Movement touch area"></div><div id="rightZone" aria-label="Camera touch area"></div>
-<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ हिस्सा: ऊपर/नीचे आगे-पीछे · दाएँ/बाएँ साइड में चलें · दायाँ हिस्सा: कैमरा</div>
+<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ जॉयस्टिक: चलना · दायाँ हिस्सा: कैमरा</div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
@@ -152,17 +152,38 @@ let driving=false, firstPerson=false, yaw=0, speed=0;
 const keys={};
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-// Mobile: left-side swipe controls forward/back + strafing only; right-side drag controls camera.
-let moveTouch=null, lookTouch=null, moveForward=0, moveStrafe=0, lookYaw=0, lookPitch=0;
-const leftZone=document.getElementById('leftZone'), rightZone=document.getElementById('rightZone'), nub=document.getElementById('leftNub');
-leftZone.addEventListener('pointerdown',e=>{e.preventDefault();moveTouch={id:e.pointerId,x:e.clientX,y:e.clientY};leftZone.setPointerCapture(e.pointerId);});
-leftZone.addEventListener('pointermove',e=>{if(!moveTouch||e.pointerId!==moveTouch.id)return;e.preventDefault();const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y;moveForward=Math.max(-1,Math.min(1,-dy/65));moveStrafe=Math.max(-1,Math.min(1,dx/65));nub.style.transform=`translate(${Math.max(-25,Math.min(25,dx/2))}px,${Math.max(-25,Math.min(25,dy/2))}px)`;});
-function endMove(e){if(moveTouch&&e.pointerId===moveTouch.id){moveTouch=null;moveForward=0;moveStrafe=0;nub.style.transform='translate(0,0)';}}
-leftZone.addEventListener('pointerup',endMove);leftZone.addEventListener('pointercancel',endMove);
-rightZone.addEventListener('pointerdown',e=>{e.preventDefault();lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};rightZone.setPointerCapture(e.pointerId);});
-rightZone.addEventListener('pointermove',e=>{if(!lookTouch||e.pointerId!==lookTouch.id)return;e.preventDefault();const dx=e.clientX-lookTouch.x,dy=e.clientY-lookTouch.y;lookYaw-=dx*.006;lookPitch=Math.max(-.35,Math.min(.55,lookPitch+dy*.004));lookTouch.x=e.clientX;lookTouch.y=e.clientY;});
+// GTA-style split controls: left virtual joystick moves the player relative to camera;
+// right-side drag changes camera only. Movement never rotates the camera/world.
+let moveTouch=null, lookTouch=null, stickX=0, stickY=0, cameraYaw=0, cameraPitch=0;
+ring.style.display="none";
+let stickOrigin={x:0,y:0};
+const leftZone=document.getElementById('leftZone'), rightZone=document.getElementById('rightZone');
+const ring=document.getElementById('leftRing'), nub=document.getElementById('leftNub');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+leftZone.addEventListener('pointerdown',e=>{
+ if(moveTouch)return; e.preventDefault();
+ moveTouch={id:e.pointerId}; stickOrigin={x:e.clientX,y:e.clientY};
+ ring.style.left=e.clientX+'px'; ring.style.top=e.clientY+'px'; ring.style.display='block';
+ nub.style.transform='translate(0px,0px)'; leftZone.setPointerCapture(e.pointerId);
+});
+leftZone.addEventListener('pointermove',e=>{
+ if(!moveTouch||e.pointerId!==moveTouch.id)return; e.preventDefault();
+ const dx=e.clientX-stickOrigin.x, dy=e.clientY-stickOrigin.y, max=43;
+ const len=Math.hypot(dx,dy), scale=len>max?max/len:1, nx=dx*scale, ny=dy*scale;
+ stickX=clamp(nx/max,-1,1); stickY=clamp(ny/max,-1,1);
+ nub.style.transform=`translate(${nx}px,${ny}px)`;
+});
+function endMove(e){if(moveTouch&&e.pointerId===moveTouch.id){moveTouch=null;stickX=0;stickY=0;nub.style.transform='translate(0px,0px)';ring.style.display='none';}}
+leftZone.addEventListener('pointerup',endMove); leftZone.addEventListener('pointercancel',endMove); leftZone.addEventListener('lostpointercapture',endMove);
+rightZone.addEventListener('pointerdown',e=>{if(lookTouch)return;e.preventDefault();lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};rightZone.setPointerCapture(e.pointerId);});
+rightZone.addEventListener('pointermove',e=>{
+ if(!lookTouch||e.pointerId!==lookTouch.id)return; e.preventDefault();
+ const dx=e.clientX-lookTouch.x, dy=e.clientY-lookTouch.y;
+ cameraYaw-=dx*.0045; cameraPitch=clamp(cameraPitch+dy*.003,-.28,.42);
+ lookTouch.x=e.clientX; lookTouch.y=e.clientY;
+});
 function endLook(e){if(lookTouch&&e.pointerId===lookTouch.id)lookTouch=null;}
-rightZone.addEventListener('pointerup',endLook);rightZone.addEventListener('pointercancel',endLook);
+rightZone.addEventListener('pointerup',endLook);rightZone.addEventListener('pointercancel',endLook);rightZone.addEventListener('lostpointercapture',endLook);
 document.getElementById('cameraMode').onclick=()=>{
  firstPerson=!firstPerson;
  document.getElementById('cameraMode').textContent='CAMERA: '+(firstPerson?'FIRST PERSON':'THIRD PERSON');
@@ -173,44 +194,48 @@ document.getElementById('mode').onclick=()=>{
  else{player.position.copy(car.position);player.position.x+=2.5;player.visible=true;car.visible=false}
 };
 const clock=new THREE.Clock();
+let moveVelocity=new THREE.Vector3();
+function angleLerp(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*t;}
 function animate(){
- requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
- const forward=keys['w']||keys['arrowup'],back=keys['s']||keys['arrowdown'];
- const left=keys['a']||keys['arrowleft'],right=keys['d']||keys['arrowright'];
+ requestAnimationFrame(animate); const dt=Math.min(clock.getDelta(),.04);
+ const kx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+ const ky=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
+ const inputX=clamp(stickX+kx,-1,1), inputY=clamp(stickY+ky,-1,1);
  const actor=driving?car:player;
- // Keep the character and follow-camera heading steady during movement.
- // Left/right inputs strafe instead of rotating the whole world view.
- actor.rotation.y=yaw;
- const direction=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
- const sideDirection=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
- const touchMove=moveForward;
- const strafe=Math.max(-1,Math.min(1,(right?1:0)-(left?1:0)+moveStrafe));
- if(driving){
-   if(forward||touchMove>.08)speed=Math.min(speed+dt*13,27);else if(back||touchMove<-.08)speed=Math.max(speed-dt*16,-9);else speed*=.96;
-   car.position.addScaledVector(direction,speed*dt);
-   car.position.addScaledVector(sideDirection,strafe*dt*8);
- }else{
-   const v=Math.max(-1,Math.min(1,(forward?1:0)-(back?1:0)+touchMove));
-   const moveVector=direction.clone().multiplyScalar(v).add(sideDirection.clone().multiplyScalar(strafe));
-   if(moveVector.lengthSq()>1)moveVector.normalize();
-   player.position.addScaledVector(moveVector,dt*10);
-   const walking=moveVector.lengthSq()>.01;
-   const stride=walking?Math.sin(performance.now()*.012)*.55:0;
-   legs[0].rotation.x=stride;legs[1].rotation.x=-stride;
-   arms[0].rotation.x=-stride*.75;arms[1].rotation.x=stride*.75;
-   torso.position.y=1.48+(walking?Math.abs(Math.sin(performance.now()*.024))*.035:0);
- }
- const viewYaw=yaw+lookYaw;
- const target=actor.position.clone().add(new THREE.Vector3(0,driving?1.6:2.0,0));
- if(firstPerson){
-   const eye=actor.position.clone().add(new THREE.Vector3(0,driving?2.0:2.05,0));
-   camera.position.lerp(eye,.22);
-   const look=eye.clone().add(new THREE.Vector3(Math.sin(viewYaw),-.04+lookPitch,-Math.cos(viewYaw)).multiplyScalar(18));
-   camera.lookAt(look);
+ const forwardVec=new THREE.Vector3(Math.sin(cameraYaw),0,-Math.cos(cameraYaw));
+ const rightVec=new THREE.Vector3(Math.cos(cameraYaw),0,Math.sin(cameraYaw));
+ let desiredMove=forwardVec.clone().multiplyScalar(-inputY).add(rightVec.clone().multiplyScalar(inputX));
+ if(desiredMove.lengthSq()>1)desiredMove.normalize();
+ if(!driving){
+   const targetVelocity=desiredMove.multiplyScalar(7.0);
+   moveVelocity.lerp(targetVelocity,1-Math.exp(-(targetVelocity.lengthSq()>0?11:14)*dt));
+   player.position.addScaledVector(moveVelocity,dt);
+   const moving=moveVelocity.lengthSq()>.05;
+   if(moving){const desiredYaw=Math.atan2(moveVelocity.x,-moveVelocity.z);yaw=angleLerp(yaw,desiredYaw,1-Math.exp(-12*dt));}
+   player.rotation.y=yaw;
+   const walkAmount=Math.min(1,moveVelocity.length()/7);
+   const phase=performance.now()*.010* (0.35+walkAmount);
+   const stride=moving?Math.sin(phase)*.62*walkAmount:0;
+   legs[0].rotation.x=stride; legs[1].rotation.x=-stride;
+   arms[0].rotation.x=-stride*.72; arms[1].rotation.x=stride*.72;
+   torso.position.y=1.48+(moving?Math.abs(Math.sin(phase*2))*.025:0);
  } else {
-   const camOffset=new THREE.Vector3(Math.sin(viewYaw)*11,7+lookPitch*8, Math.cos(viewYaw)*11);
-   camera.position.lerp(target.clone().add(camOffset),.09);
-   camera.lookAt(target.clone().add(new THREE.Vector3(0,lookPitch*5,0)));
+   const steer=inputX; if(Math.abs(inputY)>.08){speed+=(inputY<0?1:-1)*dt*12; speed=clamp(speed,-7,19);} else speed*=Math.exp(-2.8*dt);
+   yaw-=steer*dt*(.9+Math.abs(speed)*.045)*(speed<0?-1:1);
+   car.rotation.y=yaw; const carDir=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw)); car.position.addScaledVector(carDir,speed*dt);
+ }
+ const target=actor.position.clone().add(new THREE.Vector3(0,driving?1.5:1.75,0));
+ const followYaw=firstPerson?yaw:cameraYaw;
+ if(firstPerson){
+   const eye=actor.position.clone().add(new THREE.Vector3(0,driving?2.0:2.0,0));
+   camera.position.lerp(eye,1-Math.exp(-18*dt));
+   const dir=new THREE.Vector3(Math.sin(followYaw),cameraPitch-.035,-Math.cos(followYaw));
+   camera.lookAt(eye.clone().add(dir.multiplyScalar(20)));
+ } else {
+   const distance=9.5, height=4.8+cameraPitch*5;
+   const desiredCamera=target.clone().add(new THREE.Vector3(Math.sin(cameraYaw)*distance,height,Math.cos(cameraYaw)*distance));
+   camera.position.lerp(desiredCamera,1-Math.exp(-7*dt));
+   camera.lookAt(target.clone().add(new THREE.Vector3(0,cameraPitch*2.5,0)));
  }
  renderer.render(scene,camera);
 }

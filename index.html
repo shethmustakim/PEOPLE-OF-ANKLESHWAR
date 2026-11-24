@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>People of Ankleshwar — Version 0.3</title>
+<title>People of Ankleshwar — Version 0.3.2</title>
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#101820;font-family:system-ui,sans-serif}
   #hud{position:fixed;inset:12px 12px auto 12px;z-index:2;color:#fff;pointer-events:none;text-shadow:0 2px 5px #000}
@@ -25,12 +25,12 @@
 </style>
 </head>
 <body>
-<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3.1 · CONTROL FIX</div></div>
+<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3.2 · STRAFE CONTROL FIX</div></div>
 <button id="mode">MODE: WALK</button>
 <button id="cameraMode">CAMERA: THIRD PERSON</button>
-<div id="help">चलें: WASD / Arrow keys · मोबाइल: बाईं तरफ ऊपर स्वाइप = आगे, नीचे = पीछे, दायाँ = दायाँ मुड़ें, बायाँ = बायाँ मुड़ें। दाईं तरफ ड्रैग करके कैमरा घुमाएँ।</div>
+<div id="help">चलें: W/S = आगे-पीछे, A/D = बाएँ-दाएँ चलें। मोबाइल: बाईं तरफ ऊपर/नीचे = आगे-पीछे, दाएँ/बाएँ = साइड में चलें। दाईं तरफ ड्रैग = कैमरा घुमाएँ।</div>
 <div id="leftZone" aria-label="Movement touch area"></div><div id="rightZone" aria-label="Camera touch area"></div>
-<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ हिस्सा: ऊपर आगे / नीचे पीछे / दायाँ-बायाँ मुड़ना · दायाँ हिस्सा: कैमरा</div>
+<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ हिस्सा: ऊपर/नीचे आगे-पीछे · दाएँ/बाएँ साइड में चलें · दायाँ हिस्सा: कैमरा</div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
@@ -152,12 +152,12 @@ let driving=false, firstPerson=false, yaw=0, speed=0;
 const keys={};
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault()});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-// Mobile: left-side swipe controls movement/turning; right-side drag controls camera.
-let moveTouch=null, lookTouch=null, moveForward=0, moveTurn=0, lookYaw=0, lookPitch=0;
+// Mobile: left-side swipe controls forward/back + strafing only; right-side drag controls camera.
+let moveTouch=null, lookTouch=null, moveForward=0, moveStrafe=0, lookYaw=0, lookPitch=0;
 const leftZone=document.getElementById('leftZone'), rightZone=document.getElementById('rightZone'), nub=document.getElementById('leftNub');
 leftZone.addEventListener('pointerdown',e=>{e.preventDefault();moveTouch={id:e.pointerId,x:e.clientX,y:e.clientY};leftZone.setPointerCapture(e.pointerId);});
-leftZone.addEventListener('pointermove',e=>{if(!moveTouch||e.pointerId!==moveTouch.id)return;e.preventDefault();const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y;moveForward=Math.max(-1,Math.min(1,-dy/65));moveTurn=Math.max(-1,Math.min(1,dx/65));nub.style.transform=`translate(${Math.max(-25,Math.min(25,dx/2))}px,${Math.max(-25,Math.min(25,dy/2))}px)`;});
-function endMove(e){if(moveTouch&&e.pointerId===moveTouch.id){moveTouch=null;moveForward=0;moveTurn=0;nub.style.transform='translate(0,0)';}}
+leftZone.addEventListener('pointermove',e=>{if(!moveTouch||e.pointerId!==moveTouch.id)return;e.preventDefault();const dx=e.clientX-moveTouch.x,dy=e.clientY-moveTouch.y;moveForward=Math.max(-1,Math.min(1,-dy/65));moveStrafe=Math.max(-1,Math.min(1,dx/65));nub.style.transform=`translate(${Math.max(-25,Math.min(25,dx/2))}px,${Math.max(-25,Math.min(25,dy/2))}px)`;});
+function endMove(e){if(moveTouch&&e.pointerId===moveTouch.id){moveTouch=null;moveForward=0;moveStrafe=0;nub.style.transform='translate(0,0)';}}
 leftZone.addEventListener('pointerup',endMove);leftZone.addEventListener('pointercancel',endMove);
 rightZone.addEventListener('pointerdown',e=>{e.preventDefault();lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};rightZone.setPointerCapture(e.pointerId);});
 rightZone.addEventListener('pointermove',e=>{if(!lookTouch||e.pointerId!==lookTouch.id)return;e.preventDefault();const dx=e.clientX-lookTouch.x,dy=e.clientY-lookTouch.y;lookYaw-=dx*.006;lookPitch=Math.max(-.35,Math.min(.55,lookPitch+dy*.004));lookTouch.x=e.clientX;lookTouch.y=e.clientY;});
@@ -178,19 +178,23 @@ function animate(){
  const forward=keys['w']||keys['arrowup'],back=keys['s']||keys['arrowdown'];
  const left=keys['a']||keys['arrowleft'],right=keys['d']||keys['arrowright'];
  const actor=driving?car:player;
- const keyboardTurn=(right?1:0)-(left?1:0);
- const touchTurn=moveTurn;
- yaw+=(keyboardTurn+touchTurn)*dt*(driving?1.2:2.0);
+ // Keep the character and follow-camera heading steady during movement.
+ // Left/right inputs strafe instead of rotating the whole world view.
  actor.rotation.y=yaw;
  const direction=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+ const sideDirection=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
  const touchMove=moveForward;
+ const strafe=Math.max(-1,Math.min(1,(right?1:0)-(left?1:0)+moveStrafe));
  if(driving){
    if(forward||touchMove>.08)speed=Math.min(speed+dt*13,27);else if(back||touchMove<-.08)speed=Math.max(speed-dt*16,-9);else speed*=.96;
    car.position.addScaledVector(direction,speed*dt);
+   car.position.addScaledVector(sideDirection,strafe*dt*8);
  }else{
    const v=Math.max(-1,Math.min(1,(forward?1:0)-(back?1:0)+touchMove));
-   player.position.addScaledVector(direction,v*dt*10);
-   const walking=Math.abs(v)>.08;
+   const moveVector=direction.clone().multiplyScalar(v).add(sideDirection.clone().multiplyScalar(strafe));
+   if(moveVector.lengthSq()>1)moveVector.normalize();
+   player.position.addScaledVector(moveVector,dt*10);
+   const walking=moveVector.lengthSq()>.01;
    const stride=walking?Math.sin(performance.now()*.012)*.55:0;
    legs[0].rotation.x=stride;legs[1].rotation.x=-stride;
    arms[0].rotation.x=-stride*.75;arms[1].rotation.x=stride*.75;

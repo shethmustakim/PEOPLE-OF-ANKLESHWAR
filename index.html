@@ -25,12 +25,12 @@
 </style>
 </head>
 <body>
-<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3 · TOUCH CONTROL UPDATE</div></div>
+<div id="hud"><div id="brand">PEOPLE OF ANKLESHWAR</div><div id="sub">3D CITY SIMULATOR · VERSION 0.3.1 · CONTROL FIX</div></div>
 <button id="mode">MODE: WALK</button>
 <button id="cameraMode">CAMERA: THIRD PERSON</button>
-<div id="help">चलें: WASD / Arrow keys · मोबाइल: बाईं तरफ उंगली से ऊपर/नीचे स्वाइप करके चलें, दाएं/बाएं खिसकाकर मुड़ें। दाईं तरफ ड्रैग करके कैमरा घुमाएँ।</div>
+<div id="help">चलें: WASD / Arrow keys · मोबाइल: बाईं तरफ ऊपर स्वाइप = आगे, नीचे = पीछे, दायाँ = दायाँ मुड़ें, बायाँ = बायाँ मुड़ें। दाईं तरफ ड्रैग करके कैमरा घुमाएँ।</div>
 <div id="leftZone" aria-label="Movement touch area"></div><div id="rightZone" aria-label="Camera touch area"></div>
-<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ हिस्सा: चलना / मुड़ना · दायाँ हिस्सा: कैमरा घुमाना</div>
+<div id="leftRing"><div id="leftNub"></div></div><div id="lookLabel">CAMERA LOOK</div><div id="touchHelp">बायाँ हिस्सा: ऊपर आगे / नीचे पीछे / दायाँ-बायाँ मुड़ना · दायाँ हिस्सा: कैमरा</div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
 
@@ -127,7 +127,7 @@ const neck=limb(player,new THREE.CylinderGeometry(.13,.15,.18,8),skin,[0,2.0,0])
 const head=limb(player,new THREE.SphereGeometry(.31,16,12),skin,[0,2.28,0]);
 const hair=limb(player,new THREE.SphereGeometry(.315,12,8,0,Math.PI*2,0,Math.PI*.48),mat(0x241b17),[0,2.38,-.035]);
 const eyeMat=new THREE.MeshBasicMaterial({color:0x171717});
-for(const x of [-.115,.115]) limb(player,new THREE.SphereGeometry(.027,8,6),eyeMat,[x,2.29,.275]);
+for(const x of [-.115,.115]) limb(player,new THREE.SphereGeometry(.027,8,6),eyeMat,[x,2.29,-.275]);
 const arms=[],legs=[];
 for(const side of [-1,1]){
  const shoulder=new THREE.Group();shoulder.position.set(side*.48,1.78,0);player.add(shoulder);
@@ -178,11 +178,11 @@ function animate(){
  const forward=keys['w']||keys['arrowup'],back=keys['s']||keys['arrowdown'];
  const left=keys['a']||keys['arrowleft'],right=keys['d']||keys['arrowright'];
  const actor=driving?car:player;
- const keyboardTurn=(left?1:0)-(right?1:0);
+ const keyboardTurn=(right?1:0)-(left?1:0);
  const touchTurn=moveTurn;
  yaw+=(keyboardTurn+touchTurn)*dt*(driving?1.2:2.0);
  actor.rotation.y=yaw;
- const direction=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
+ const direction=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
  const touchMove=moveForward;
  if(driving){
    if(forward||touchMove>.08)speed=Math.min(speed+dt*13,27);else if(back||touchMove<-.08)speed=Math.max(speed-dt*16,-9);else speed*=.96;
@@ -201,10 +201,10 @@ function animate(){
  if(firstPerson){
    const eye=actor.position.clone().add(new THREE.Vector3(0,driving?2.0:2.05,0));
    camera.position.lerp(eye,.22);
-   const look=eye.clone().add(new THREE.Vector3(Math.sin(viewYaw),-.04+lookPitch,Math.cos(viewYaw)).multiplyScalar(18));
+   const look=eye.clone().add(new THREE.Vector3(Math.sin(viewYaw),-.04+lookPitch,-Math.cos(viewYaw)).multiplyScalar(18));
    camera.lookAt(look);
  } else {
-   const camOffset=new THREE.Vector3(-Math.sin(viewYaw)*11,7+lookPitch*8, -Math.cos(viewYaw)*11);
+   const camOffset=new THREE.Vector3(Math.sin(viewYaw)*11,7+lookPitch*8, Math.cos(viewYaw)*11);
    camera.position.lerp(target.clone().add(camOffset),.09);
    camera.lookAt(target.clone().add(new THREE.Vector3(0,lookPitch*5,0)));
  }

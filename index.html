@@ -155,10 +155,11 @@ addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 // GTA-style split controls: left virtual joystick moves the player relative to camera;
 // right-side drag changes camera only. Movement never rotates the camera/world.
 let moveTouch=null, lookTouch=null, stickX=0, stickY=0, cameraYaw=0, cameraPitch=0;
-ring.style.display="none";
 let stickOrigin={x:0,y:0};
 const leftZone=document.getElementById('leftZone'), rightZone=document.getElementById('rightZone');
 const ring=document.getElementById('leftRing'), nub=document.getElementById('leftNub');
+// Initialize the joystick only after its DOM element has been selected.
+ring.style.display="none";
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 leftZone.addEventListener('pointerdown',e=>{
  if(moveTouch)return; e.preventDefault();
